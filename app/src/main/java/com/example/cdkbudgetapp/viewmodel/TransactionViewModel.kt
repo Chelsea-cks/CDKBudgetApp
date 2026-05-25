@@ -38,8 +38,6 @@ class TransactionViewModel(app: Application) : AndroidViewModel(app) {
         amount: Double, 
         category: String, 
         date: String, 
-        startTime: String, 
-        endTime: String,
         photoUri: String? = null
     ) {
         viewModelScope.launch {
@@ -49,8 +47,6 @@ class TransactionViewModel(app: Application) : AndroidViewModel(app) {
                     amount = amount, 
                     category = category,
                     date = date,
-                    startTime = startTime,
-                    endTime = endTime,
                     photoUri = photoUri
                 )
             )

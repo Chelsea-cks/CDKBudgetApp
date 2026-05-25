@@ -50,8 +50,6 @@ fun DashboardScreen(
     var amount by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())) }
-    var startTime by remember { mutableStateOf("09:00") }
-    var endTime by remember { mutableStateOf("10:00") }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -60,157 +58,179 @@ fun DashboardScreen(
         photoUri = uri
     }
 
-    Column(Modifier.padding(16.dp)) {
-        Spacer(Modifier.height(40.dp))
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text("CDK BUDGET", style = MaterialTheme.typography.headlineLarge)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Streak",
-                        tint = Color(0xFFFF9800)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
+            Spacer(Modifier.height(40.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("CDK BUDGET", style = MaterialTheme.typography.headlineLarge)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Streak",
+                            tint = Color(0xFFFF9800)
+                        )
+                        Text(" $streak Day Streak!", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+                Switch(checked = darkMode, onCheckedChange = onToggleTheme)
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Goal Performance Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Goal Performance ($selectedPeriod)", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(8.dp))
+                    
+                    val progress = if (maxGoal > 0) (totalSpentInPeriod / maxGoal).toFloat().coerceIn(0f, 1f) else 0f
+                    val statusColor = when {
+                        totalSpentInPeriod > maxGoal -> Color.Red
+                        totalSpentInPeriod < minGoal -> Color.Yellow
+                        else -> Color.Green
+                    }
+                    
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth().height(12.dp),
+                        color = statusColor,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
-                    Text(" $streak Day Streak!", style = MaterialTheme.typography.titleMedium)
-                }
-            }
-            Switch(checked = darkMode, onCheckedChange = onToggleTheme)
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        // Goal Performance Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-        ) {
-            Column(Modifier.padding(16.dp)) {
-                Text("Monthly Goal Performance", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(8.dp))
-                
-                val progress = if (maxGoal > 0) (totalSpentInPeriod / maxGoal).toFloat().coerceIn(0f, 1f) else 0f
-                val statusColor = when {
-                    totalSpentInPeriod > maxGoal -> Color.Red
-                    totalSpentInPeriod < minGoal -> Color.Yellow
-                    else -> Color.Green
-                }
-                
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(12.dp),
-                    color = statusColor,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-                
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Spent: R${"%.2f".format(totalSpentInPeriod)}", style = MaterialTheme.typography.bodySmall)
-                    Text("Max Goal: R$maxGoal", style = MaterialTheme.typography.bodySmall)
-                }
-                
-                val message = when {
-                    totalSpentInPeriod > maxGoal -> "Over Budget! ⚠️"
-                    totalSpentInPeriod >= minGoal -> "Target Zone! ✅"
-                    else -> "Under Minimum Goal 📊"
-                }
-                Text(message, style = MaterialTheme.typography.labelMedium, color = statusColor)
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        // Add Expense Section
-        Text("Log Expense", style = MaterialTheme.typography.titleMedium)
-        OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth())
-        
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("Amount") }, modifier = Modifier.weight(1f))
-            OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Category") }, modifier = Modifier.weight(1f))
-        }
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Date (YYYY-MM-DD)") }, modifier = Modifier.weight(1.2f))
-            OutlinedTextField(value = startTime, onValueChange = { startTime = it }, label = { Text("Start") }, modifier = Modifier.weight(0.9f))
-            OutlinedTextField(value = endTime, onValueChange = { endTime = it }, label = { Text("End") }, modifier = Modifier.weight(0.9f))
-        }
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { photoPickerLauncher.launch("image/*") }) {
-                Icon(Icons.Default.Add, "Add Photo")
-            }
-            if (photoUri != null) {
-                Text("Photo attached ✅", style = MaterialTheme.typography.bodySmall)
-            }
-        }
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
-                onClick = {
-                    if (description.isNotEmpty() && amount.isNotEmpty()) {
-                        vm.add(description, amount.toDoubleOrNull() ?: 0.0, category, date, startTime, endTime, photoUri?.toString())
-                        description = ""
-                        amount = ""
-                        category = ""
-                        photoUri = null
+                    
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Spent: R${"%.2f".format(totalSpentInPeriod)}", style = MaterialTheme.typography.bodySmall)
+                        Text("Max Goal: R$maxGoal", style = MaterialTheme.typography.bodySmall)
                     }
-                },
-                modifier = Modifier.weight(1f)
-            ) { Text("Add") }
-
-            Button(onClick = { navController.navigate(Routes.Chart.route) }, modifier = Modifier.weight(1f)) {
-                Text("View Chart 📊")
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        // Period filter for list
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Expenses for: ", style = MaterialTheme.typography.titleSmall)
-            Box {
-                TextButton(onClick = { periodExpanded = true }) {
-                    Text(selectedPeriod)
-                    Icon(Icons.Default.ArrowDropDown, null)
-                }
-                DropdownMenu(expanded = periodExpanded, onDismissRequest = { periodExpanded = false }) {
-                    periods.forEach { p ->
-                        DropdownMenuItem(text = { Text(p) }, onClick = { selectedPeriod = p; periodExpanded = false })
+                    
+                    val message = when {
+                        totalSpentInPeriod > maxGoal -> "Over Budget! ⚠️"
+                        totalSpentInPeriod >= minGoal -> "Target Zone! ✅"
+                        else -> "Under Minimum Goal 📊"
                     }
+                    Text(message, style = MaterialTheme.typography.labelMedium, color = statusColor)
                 }
             }
-        }
 
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(filteredList) { item ->
-                Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Column(Modifier.padding(16.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(item.description, style = MaterialTheme.typography.bodyLarge)
-                                Text("${item.category} | ${item.date}", style = MaterialTheme.typography.bodySmall)
-                                Text("${item.startTime} - ${item.endTime}", style = MaterialTheme.typography.bodySmall)
-                            }
-                            Text("R${item.amount}", style = MaterialTheme.typography.bodyLarge)
-                            IconButton(onClick = { vm.delete(item) }) {
-                                Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                            }
+            Spacer(Modifier.height(16.dp))
+
+            // Add Expense Section
+            Text("Log Expense", style = MaterialTheme.typography.titleMedium)
+            OutlinedTextField(
+                value = description, 
+                onValueChange = { description = it }, 
+                label = { Text("Description") }, 
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("Amount") }, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("Category") }, modifier = Modifier.weight(1f))
+            }
+
+            OutlinedTextField(
+                value = date, 
+                onValueChange = { date = it }, 
+                label = { Text("Date (YYYY-MM-DD)") }, 
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { photoPickerLauncher.launch("image/*") }) {
+                    Icon(Icons.Default.Add, "Add Photo")
+                }
+                if (photoUri != null) {
+                    Text("Photo attached ✅", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = {
+                        if (description.isNotEmpty() && amount.isNotEmpty()) {
+                            vm.add(description, amount.toDoubleOrNull() ?: 0.0, category, date, photoUri?.toString())
+                            description = ""
+                            amount = ""
+                            category = ""
+                            photoUri = null
                         }
-                        if (item.photoUri != null) {
-                            Spacer(Modifier.height(8.dp))
-                            AsyncImage(
-                                model = item.photoUri,
-                                contentDescription = "Expense Photo",
-                                modifier = Modifier.fillMaxWidth().height(150.dp),
-                                contentScale = ContentScale.Crop
+                    },
+                    modifier = Modifier.weight(1f)
+                ) { Text("Add") }
+
+                Button(onClick = { navController.navigate(Routes.Chart.route) }, modifier = Modifier.weight(1f)) {
+                    Text("View Chart 📊")
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Period filter for list
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Expenses for: ", style = MaterialTheme.typography.titleSmall)
+                Box {
+                    TextButton(onClick = { periodExpanded = true }) {
+                        Text(selectedPeriod)
+                        Icon(Icons.Default.ArrowDropDown, null)
+                    }
+                    DropdownMenu(expanded = periodExpanded, onDismissRequest = { periodExpanded = false }) {
+                        periods.forEach { p ->
+                            DropdownMenuItem(
+                                text = { Text(p) },
+                                onClick = { selectedPeriod = p; periodExpanded = false }
                             )
                         }
                     }
                 }
             }
         }
+
+        items(filteredList) { item ->
+            Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(item.description, style = MaterialTheme.typography.bodyLarge)
+                            Text("${item.category} | ${item.date}", style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text("R${item.amount}", style = MaterialTheme.typography.bodyLarge)
+                        IconButton(onClick = { vm.delete(item) }) {
+                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                    if (item.photoUri != null) {
+                        Spacer(Modifier.height(8.dp))
+                        AsyncImage(
+                            model = item.photoUri,
+                            contentDescription = "Expense Photo",
+                            modifier = Modifier.fillMaxWidth().height(150.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(16.dp))
+        }
     }
 }
 
+@Composable
+fun BadgeIcon(name: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(imageVector = icon, contentDescription = name, tint = color, modifier = Modifier.size(40.dp))
+        Text(name, style = MaterialTheme.typography.labelSmall)
+    }
+}

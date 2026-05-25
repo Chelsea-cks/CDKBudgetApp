@@ -10,9 +10,7 @@ data class Transaction(
     val description: String,
     val amount: Double,
     val category: String,
-    val date: String,      // Format: YYYY-MM-DD
-    val startTime: String, // Format: HH:mm
-    val endTime: String,   // Format: HH:mm
+    val date: String,      //  YYYY-MM-DD
     val photoUri: String? = null,
     val timestamp: Long = System.currentTimeMillis()
 )

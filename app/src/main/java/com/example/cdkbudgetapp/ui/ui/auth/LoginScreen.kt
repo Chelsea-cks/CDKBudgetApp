@@ -8,14 +8,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cdkbudgetapp.viewmodel.AuthResult
+import com.example.cdkbudgetapp.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onRegisterClick: () -> Unit
+    onRegisterClick: () -> Unit,
+    vm: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val authState by vm.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthResult.Success) {
+            onLoginSuccess()
+            vm.resetAuthState()
+        }
+    }
 
     Column(
         Modifier
@@ -54,11 +66,21 @@ fun LoginScreen(
         
         Spacer(Modifier.height(20.dp))
 
+        if (authState is AuthResult.Error) {
+            Text((authState as AuthResult.Error).message, color = MaterialTheme.colorScheme.error)
+            Spacer(Modifier.height(8.dp))
+        }
+
         Button(
-            onClick = onLoginSuccess,
-            modifier = Modifier.fillMaxWidth()
+            onClick = { vm.login(email, password) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = authState !is AuthResult.Loading
         ) {
-            Text("Login")
+            if (authState is AuthResult.Loading) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+            } else {
+                Text("Login")
+            }
         }
 
         Spacer(Modifier.height(10.dp))

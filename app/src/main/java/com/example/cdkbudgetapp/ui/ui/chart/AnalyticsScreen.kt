@@ -28,7 +28,7 @@ fun AnalyticsScreen(
     vm: TransactionViewModel = viewModel()
 ) {
     var selectedChart by remember { mutableStateOf(0) }
-    val chartTypes = listOf("Pie", "Bar", "Radar", "Line")
+    val chartTypes = listOf("Pie", "Bar", "Line")
     
     var selectedPeriod by remember { mutableStateOf("All Time") }
     val periods = listOf("Today", "This Week", "This Month", "All Time")
@@ -93,8 +93,7 @@ fun AnalyticsScreen(
                 when (selectedChart) {
                     0 -> RenderPieChart(categoryTotals, textColor)
                     1 -> RenderBarChart(categoryTotals, textColor, false, minGoal, maxGoal)
-                    2 -> RenderRadarChart(categoryTotals, textColor)
-                    3 -> RenderLineChart(filteredList, textColor, minGoal, maxGoal)
+                    2 -> RenderLineChart(filteredList, textColor, minGoal, maxGoal)
                 }
             }
         }
@@ -108,14 +107,14 @@ fun RenderPieChart(data: Map<String, Double>, textColor: Int) {
         PieChart(context).apply {
             val dataSet = PieDataSet(entries, "").apply {
                 colors = getChartColors()
-                valueTextColor = textColor
+                valueTextColor = Color.rgb(0,0,0)
                 valueTextSize = 12f
             }
             this.data = PieData(dataSet)
             this.description.isEnabled = false
             this.legend.textColor = textColor
             this.setHoleColor(Color.TRANSPARENT)
-            this.setEntryLabelColor(textColor)
+            this.setEntryLabelColor(Color.rgb(0,0,0))
             this.animateY(800)
             this.invalidate()
         }
@@ -169,38 +168,6 @@ fun RenderBarChart(data: Map<String, Double>, textColor: Int, isHorizontal: Bool
 }
 
 @Composable
-fun RenderRadarChart(data: Map<String, Double>, textColor: Int) {
-    val entries = data.map { RadarEntry(it.value.toFloat()) }
-    val labels = data.keys.toList()
-
-    AndroidView(factory = { context ->
-        RadarChart(context).apply {
-            val dataSet = RadarDataSet(entries, "Spending Distribution").apply {
-                color = Color.CYAN
-                fillColor = Color.CYAN
-                setDrawFilled(true)
-                fillAlpha = 180
-                valueTextColor = textColor
-            }
-            this.data = RadarData(dataSet)
-            this.description.isEnabled = false
-            this.legend.textColor = textColor
-            
-            this.xAxis.apply {
-                valueFormatter = IndexAxisValueFormatter(labels)
-                this.textColor = textColor
-            }
-            this.yAxis.apply {
-                setDrawLabels(false)
-                this.textColor = textColor
-            }
-            this.animateXY(800, 800)
-            this.invalidate()
-        }
-    }, modifier = Modifier.fillMaxSize())
-}
-
-@Composable
 fun RenderLineChart(transactions: List<Transaction>, textColor: Int, minGoal: Double, maxGoal: Double) {
     val entries = transactions.mapIndexed { index, transaction ->
         Entry(index.toFloat(), transaction.amount.toFloat())
@@ -245,9 +212,17 @@ fun RenderLineChart(transactions: List<Transaction>, textColor: Int, minGoal: Do
 
 fun getChartColors(): List<Int> {
     return listOf(
-        Color.rgb(192, 255, 140), Color.rgb(255, 247, 140), Color.rgb(255, 208, 140),
-        Color.rgb(140, 234, 255), Color.rgb(255, 140, 157), Color.rgb(217, 80, 138),
-        Color.rgb(254, 149, 7), Color.rgb(254, 247, 120), Color.rgb(106, 167, 134),
-        Color.rgb(53, 194, 209), Color.rgb(64, 89, 128), Color.rgb(149, 165, 124)
+        Color.rgb(255, 182, 193),   // soft pink
+        Color.rgb(255, 247, 140),   // yellow
+        Color.rgb(255, 208, 140),   // peach
+        Color.rgb(140, 234, 255),   // sky blue
+        Color.rgb(255, 140, 157),   // pink-red
+        Color.rgb(217, 80, 138),    // magenta
+        Color.rgb(254, 149, 7),     // orange
+        Color.rgb(254, 247, 120),   // bright yellow
+        Color.rgb(186, 145, 255),   // lavender (replaces muted green)
+        Color.rgb(53, 194, 209),    // cyan
+        Color.rgb(64, 89, 128),     // navy
+        Color.rgb(210, 170, 120)    // warm beige (replaces olive)
     )
 }
